@@ -115,37 +115,36 @@ var Fm = {
     EventCenter.on('selector-album', function (e, channelObj) {
       _this.channelId = channelObj.channelId
       _this.channelName = channelObj.channelName
-      _this.loadMusic(function () {
-        _this.setMusic()
-      })
+      _this.loadMusic()
     })
 
     this.$container.find('.btn-play').on('click', function () {
       var $btn = $(this)
-      if($btn.hasClass('icon-play')){
+      if ($btn.hasClass('icon-play')) {
         $btn.removeClass('icon-play').addClass('icon-pause')
         _this.audio.play()
-      }else{
+      } else {
         $btn.removeClass('icon-pause').addClass('icon-play')
         _this.audio.pause()
       }
     })
 
-    this.$container.find('.btn-next').on('click', function(){
-      _this.loadMusic(function(){
-        _this.setMusic()
-      })
+    this.$container.find('.btn-next').on('click', function () {
+      _this.loadMusic()
     })
 
-    this.audio.addEventListener('play', function(){
-      console.log('play')
+    this.audio.addEventListener('play', function () {
+      clearInterval(_this.statusClock)
+      _this.statusClock = setInterval(function () {
+        _this.updaStatus()
+      }, 1000)
     })
 
-    this.audio.addEventListener('pause', function(){
-      console.log('pause')
+    this.audio.addEventListener('pause', function () {
+      clearInterval(_this.statusClock)
     })
   },
-  loadMusic: function (callBack) {
+  loadMusic: function () {
     var _this = this
     $.getJSON('//jirenguapi.applinzi.com/fm/getSong.php', {
         channel: this.channelId
@@ -153,7 +152,28 @@ var Fm = {
       .done(function (ret) {
         _this.song = ret.song[0]
         // console.log(_this.song)
-        callBack()
+        _this.setMusic()
+        _this.loadLyric()
+      })
+  },
+  loadLyric() {
+    var _this = this
+    $.getJSON('//jirenguapi.applinzi.com/fm/getLyric.php', {
+        sid: this.song.sid
+      })
+      .done(function (ret) {
+        var lyric = ret.lyric
+        var lyricObj = {}
+        lyric.split('\n').forEach(function (line) {
+          var times = line.match(/\d{2}:\d{2}/g)
+          var str = line.replace(/\[.+?\]/g, '')
+          if (Array.isArray(times)) {
+            times.forEach(function (time) {
+              lyricObj[time] = str
+            })
+          }
+        })
+        _this.lyricObj = lyricObj
       })
   },
   setMusic: function () {
@@ -165,7 +185,41 @@ var Fm = {
     _this.$container.find('.detail .author').text(this.song.artist)
     _this.$container.find('.detail .tag').text(this.channelName)
     _this.$container.find('.btn-play').removeClass('icon-play').addClass('icon-pause')
+  },
+  updaStatus: function () {
+    var min = Math.floor(this.audio.currentTime / 60)
+    var second = Math.floor(this.audio.currentTime % 60) + ''
+    second = second.length === 2 ? second : '0' + second
+    this.$container.find('.current-time').text(min + ':' + second)
+    var progressWidth = this.audio.currentTime / this.audio.duration * 100 + '%'
+    this.$container.find('.bar-progress').css('width', progressWidth)
+
+    var line = this.lyricObj['0' + min + ':' + second]
+    if (line) {
+      this.$container.find('.lyric p').text(line).boomText()
+    }
   }
+}
+
+$.fn.boomText = function (type) {
+  type = type || 'fadeIn'
+  this.html(function () {
+    var arr = $(this).text()
+      .split('').map(function (word) {
+        return '<span class="boomText">' + word + '</span>'
+      })
+    return arr.join('')
+  })
+
+  var index = 0
+  var $boomTexts = $(this).find('span')
+  var clock = setInterval(function () {
+    $boomTexts.eq(index).addClass('animated ' + type)
+    index++
+    if (index >= $boomTexts.length) {
+      clearInterval(clock)
+    }
+  }, 300)
 }
 
 Footer.init()
