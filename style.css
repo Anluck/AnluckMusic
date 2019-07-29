@@ -109,7 +109,7 @@ main .aside>figure {
   height: 46vh;
   background-image: url(http://cloud.hunger-valley.com/music/public_tuijian_spring.jpg-middle);
   background-size: cover;
-  position-position: center center;
+  background-position: center center;
 }
 
 main .aside .actions {
@@ -130,6 +130,9 @@ main .aside .iconfont:hover {
   color: #fff;
 }
 
+main .aside .iconfont.active{
+  color: #ff5722;
+}
 
 main .detail {
   margin-left: 56vh;
