@@ -33,24 +33,18 @@ var Footer = {
       if (_this.isAnimate) return;
       if (!_this.toEnd) {
         _this.isAnimate = true;
-        _this.$ul.animate(
-          {
-            left: "-=" + itemWidth * rowCount
-          },
-          400,
-          function() {
-            _this.isAnimate = false;
-            _this.toStart = false;
-            if (
-              parseFloat(
-                _this.$box.width() - parseFloat(_this.$ul.css("left"))
-              ) >= parseFloat(_this.$ul.css("width"))
-            ) {
-              _this.toEnd = true;
-              _this.$rightBtn.addClass("disabled");
-            }
+        _this.$ul.animate({
+          left: "-=" + itemWidth * rowCount
+        }, 400, function() {
+          _this.isAnimate = false;
+          _this.toStart = false;
+          var boxWidth = parseFloat(_this.$box.width())
+          var ulToLeft = parseFloat(_this.$ul.css("left"))
+          if (boxWidth - ulToLeft >= parseFloat(_this.$ul.css("width"))) {
+            _this.toEnd = true;
+            _this.$rightBtn.addClass("disabled");
           }
-        );
+        });
       }
     });
 
@@ -58,28 +52,21 @@ var Footer = {
       if (_this.isAnimate) return;
       if (!_this.toStart) {
         _this.isAnimate = true;
-        _this.$ul.animate(
-          {
-            left: "+=" + itemWidth * rowCount
-          },
-          400,
-          function() {
-            _this.isAnimate = false;
-            _this.toEnd = false;
-            if (parseFloat(_this.$ul.css("left")) >= 0) {
-              _this.toStart = true;
-              _this.$leftBtn.addClass("disabled");
-            }
+        _this.$ul.animate({
+          left: "+=" + itemWidth * rowCount
+        }, 400, function() {
+          _this.isAnimate = false;
+          _this.toEnd = false;
+          if (parseFloat(_this.$ul.css("left")) >= 0) {
+            _this.toStart = true;
+            _this.$leftBtn.addClass("disabled");
           }
-        );
+        });
       }
     });
 
     this.$footer.on("click", "li", function() {
-      $(this)
-        .addClass("active")
-        .siblings()
-        .removeClass("active");
+      $(this).addClass("active").siblings().removeClass("active");
       EventCenter.fire("selector-album", {
         channelId: $(this).attr("data-channel-id"),
         channelName: $(this).attr("data-channel-name")
@@ -104,25 +91,14 @@ var Footer = {
       channel_id: 0,
       name: "我的最爱",
       cover_small: "http://cloud.hunger-valley.com/17-10-24/1906806.jpg-small",
-      cover_middle:
-        "http://cloud.hunger-valley.com/17-10-24/1906806.jpg-middle",
+      cover_middle: "http://cloud.hunger-valley.com/17-10-24/1906806.jpg-middle",
       cover_big: "http://cloud.hunger-valley.com/17-10-24/1906806.jpg-big"
     });
     channels.forEach(function(channel) {
-      html +=
-        "<li data-channel-id=" +
-        channel.channel_id +
-        " data-channel-name=" +
-        channel.name +
-        ">" +
-        '<div class="cover" style="background-image:url(' +
-        channel.cover_small +
-        ')">' +
-        "</div>" +
-        "<h3>" +
-        channel.name +
-        "</h3>" +
-        "</li>";
+      html += '<li data-channel-id=' + channel.channel_id + ' data-channel-name='+ channel.name +'>' +
+              '  <div class="cover" style="background-image:url(' + channel.cover_small + ')"></div>' +
+              '  <h3>' + channel.name + '</h3>' +
+              '</li>'
       _this.$ul.html(html);
       _this.setStyle();
     });
@@ -214,14 +190,13 @@ var Fm = {
       }).done(function(ret) {
         _this.song = ret.song[0];
         _this.setMusic(ret.song[0] || null);
-        _this.loadLyric();
       });
     }
   },
-  loadLyric() {
+  loadLyric(sid) {
     var _this = this;
     $.getJSON("//jirenguapi.applinzi.com/fm/getLyric.php", {
-      sid: this.song.sid
+      sid: sid
     }).done(function(ret) {
       var lyric = ret.lyric;
       var lyricObj = {};
@@ -242,39 +217,29 @@ var Fm = {
     _this.currentSong = song;
     $(".bg").css("background", "url(" + this.currentSong.picture + ")");
     _this.audio.src = this.currentSong.url;
-    _this.$container
-      .find(".aside figure")
-      .css("background-image", "url(" + this.currentSong.picture + ")");
+    _this.$container.find(".aside figure").css("background-image", "url(" + this.currentSong.picture + ")");
     _this.$container.find(".detail h1").text(this.currentSong.title);
     _this.$container.find(".detail .author").text(this.currentSong.artist);
     _this.$container.find(".detail .tag").text(this.channelName);
-    _this.$container
-      .find(".btn-play")
-      .removeClass("icon-play")
-      .addClass("icon-pause");
+    _this.$container.find(".btn-play").removeClass("icon-play").addClass("icon-pause");
 
     if (_this.collections[song.sid]) {
       _this.$container.find(".btn-collect").addClass("active");
     } else {
       _this.$container.find(".btn-collect").removeClass("active");
     }
+    this.loadLyric(song.sid);
   },
   updaStatus: function() {
     var min = Math.floor(this.audio.currentTime / 60);
     var second = Math.floor(this.audio.currentTime % 60) + "";
     second = second.length === 2 ? second : "0" + second;
     this.$container.find(".current-time").text(min + ":" + second);
-    var progressWidth =
-      (this.audio.currentTime / this.audio.duration) * 100 + "%";
+    var progressWidth = (this.audio.currentTime / this.audio.duration) * 100 + '%';
     this.$container.find(".bar-progress").css("width", progressWidth);
-    if (this.lyricObj !== undefined) {
-      var line = this.lyricObj["0" + min + ":" + second];
-    }
+    var line = this.lyricObj["0" + min + ":" + second];
     if (line) {
-      this.$container
-        .find(".lyric p")
-        .text(line)
-        .boomText();
+      this.$container.find(".lyric p").text(line).boomText();
     }
   },
   loadFormLocal: function() {
@@ -295,12 +260,9 @@ var Fm = {
 $.fn.boomText = function(type) {
   type = type || "fadeIn";
   this.html(function() {
-    var arr = $(this)
-      .text()
-      .split("")
-      .map(function(word) {
-        return '<span class="boomText">' + word + "</span>";
-      });
+    var arr = $(this).text().split("").map(function(word) {
+      return '<span class="boomText">' + word + "</span>";
+    });
     return arr.join("");
   });
 
